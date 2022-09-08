@@ -3,6 +3,16 @@ import bpy
 from bpy import context, data, ops
 
 def render_images(path_obj, path_mat,path_background):
+    """
+    In Windows double backlslashes have to be used for the file paths 
+    path_obj : path to obj data 
+    path_mat : path to material png / jpg 
+    path_background :  path to background HDRI file .exr 
+
+    return None 
+    Output : Images from a circle around the object with a given background and material for the surface 
+    """
+    #loading data and adding material to object 
     imported_object = bpy.ops.import_scene.obj(filepath=path_obj)
     obj_object = bpy.context.selected_objects[0]
     mat = bpy.data.materials.new(name="New_Mat")
@@ -17,6 +27,7 @@ def render_images(path_obj, path_mat,path_background):
     else:
         ob.data.materials.append(mat) 
     print('Imported name: ', obj_object.name)
+    # Creating circe that allows the camera to move around the object 
     bpy.ops.object.origin_set(type='GEOMETRY_ORIGIN', center='MEDIAN')
     bpy.ops.object.empty_add(type='PLAIN_AXES', align='WORLD', location=(0, 0, 0), scale=(5, 5, 5))
     bpy.ops.curve.primitive_bezier_circle_add(radius=1, enter_editmode=False, align='WORLD', location=(0, 0, 0),               scale=(1, 1, 1))
@@ -42,8 +53,33 @@ def render_images(path_obj, path_mat,path_background):
     camera.select_set(True)
     bpy.context.view_layer.objects.active = circle  
     bpy.ops.object.parent_set(type='FOLLOW')
+    #HDR Background 
+    context = bpy.context
+    scene = context.scene
 
+    # get tree for scene 
+    node_tree = scene.world.node_tree
+    nodes = node_tree.nodes
 
+    # clear
+    nodes.clear()
+    node_background = nodes.new(type='ShaderNodeBackground')
+
+    #background texture 
+    node_environment = nodes.new('ShaderNodeTexEnvironment')
+    #load image a
+    node_environment.image = bpy.data.images.load(path_background) # Relative path
+    node_environment.location = -300,0
+
+    # Add as background node 
+    node_output = nodes.new(type='ShaderNodeOutputWorld')   
+    node_output.location = 200,0
+
+    # link everything 
+    links = node_tree.links
+    link = links.new(node_environment.outputs["Color"], node_background.inputs["Color"])
+    link = links.new(node_background.outputs["Background"], node_output.inputs["Surface"])
+    # Animation of Camera moving around the object 
     bpy.context.object.data.path_duration = 30
     bpy.context.scene.frame_end = 30
     bpy.context.scene.render.fps = 10
@@ -56,4 +92,5 @@ def render_images(path_obj, path_mat,path_background):
     bpy.ops.render.render(animation=False, write_still=True)
 
 if __name__ == "__main__":
+    pass 
     

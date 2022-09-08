@@ -1,0 +1,7 @@
+pytorch,
+torchvision,
+numpy,
+pandas,
+matplotlib,
+antialiased_cnns,
+pillow
