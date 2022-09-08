@@ -86,6 +86,4 @@ def positional_encoding(x,y,z,l):
         vector = ts.cat((new_x,new_y,new_z), dim = 0)
         return vector
 
-print(positional_encoding(1,2,3,43).shape)
-
     
